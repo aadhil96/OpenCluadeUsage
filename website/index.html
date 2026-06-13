@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude Watch — Live token usage for Claude Code</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d0d0d;
+      --surface:  #161616;
+      --border:   #2a2a2a;
+      --claude:   #da7756;
+      --claude2:  #e8945a;
+      --text:     #f0f0f0;
+      --muted:    #888;
+      --mono:     'JetBrains Mono', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 14px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 48px;
+      background: rgba(13,13,13,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-logo span {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--claude), var(--claude2));
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      background: linear-gradient(135deg, var(--claude), var(--claude2));
+      color: #fff !important;
+      padding: 8px 20px;
+      border-radius: 6px;
+      font-weight: 600 !important;
+      letter-spacing: 0.02em !important;
+    }
+
+    .nav-cta:hover { opacity: 0.9; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(218,119,86,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 5px 16px;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 32px;
+      letter-spacing: 0.06em;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--claude);
+    }
+
+    h1 {
+      font-size: clamp(36px, 6vw, 68px);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 24px;
+    }
+
+    h1 .gradient {
+      background: linear-gradient(135deg, var(--claude) 0%, var(--claude2) 60%, #f0c090 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: 15px;
+      color: var(--muted);
+      max-width: 480px;
+      margin: 0 auto 48px;
+      font-weight: 400;
+      line-height: 1.8;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 72px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--claude), var(--claude2));
+      color: #fff;
+      text-decoration: none;
+      padding: 13px 28px;
+      border-radius: 8px;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      color: var(--text);
+      text-decoration: none;
+      padding: 13px 28px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .btn-secondary:hover { border-color: #555; transform: translateY(-1px); }
+
+    /* ── SECTION SHARED ── */
+    section {
+      padding: 96px 24px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      color: var(--claude);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: clamp(24px, 3.5vw, 36px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      font-size: 14px;
+      max-width: 520px;
+      line-height: 1.8;
+    }
+
+    /* ── FEATURES ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 56px;
+    }
+
+    .feature {
+      background: var(--surface);
+      padding: 32px 28px;
+      transition: background 0.2s;
+    }
+
+    .feature:hover { background: #1c1c1c; }
+
+    .feature-icon {
+      margin-bottom: 16px;
+      color: var(--claude);
+      font-size: 0;
+    }
+
+    .feature-icon iconify-icon {
+      font-size: 22px;
+    }
+
+    .feature-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+      letter-spacing: 0.01em;
+    }
+
+    .feature-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    /* ── CODE BLOCK ── */
+    .code-section {
+      border-top: 1px solid var(--border);
+    }
+
+    .code-wrap {
+      margin-top: 48px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      background: #111;
+    }
+
+    .code-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+    }
+
+    .code-filename {
+      margin-left: 8px;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    pre {
+      padding: 28px;
+      overflow-x: auto;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.9;
+      color: #ccc;
+    }
+
+    .kw  { color: #da7756; }
+    .str { color: #98c379; }
+    .num { color: #d19a66; }
+    .cmt { color: #555; font-style: italic; }
+    .key { color: #61afef; }
+
+    /* ── INSTALL ── */
+    .install-section {
+      border-top: 1px solid var(--border);
+    }
+
+    .steps {
+      margin-top: 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .step {
+      display: flex;
+      gap: 24px;
+      padding: 28px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .step:last-child { border-bottom: none; }
+
+    .step-num {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, var(--claude), var(--claude2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 2px;
+    }
+
+    .step-body h3 {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      letter-spacing: 0.01em;
+    }
+
+    .step-body p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .inline-code {
+      background: #222;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 7px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: #d0a080;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-left {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .footer-left strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+    }
+
+    .footer-links a {
+      font-size: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--text); }
+
+    /* ── DIVIDER ── */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: var(--border);
+    }
+
+    @media (max-width: 640px) {
+      nav { padding: 16px 20px; }
+      .nav-links { display: none; }
+      footer { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-logo">
+      <span></span>Claude Watch
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how-it-works">How it works</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="https://github.com/aadhil96/OpenCluadeUsage" target="_blank">GitHub</a></li>
+      <li><a href="https://github.com/aadhil96/OpenCluadeUsage/contribute" class="nav-cta" target="_blank">Contribute</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+<h1>
+      Know exactly how many<br/>
+      tokens you've <span class="gradient">burned</span>.
+    </h1>
+    <p class="hero-sub">
+      Claude Watch sits in your menu bar and shows live Claude Code token usage —
+      session window, weekly totals, and per-model breakdown.
+      No API key needed.
+    </p>
+    <div class="hero-actions">
+      <a href="https://github.com/aadhil96/OpenCluadeUsage" class="btn-primary" target="_blank">
+        View on GitHub
+      </a>
+      <a href="https://github.com/aadhil96/OpenCluadeUsage/contribute" class="btn-secondary" target="_blank">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        Contribute
+      </a>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <p class="section-label">Features</p>
+    <h2 class="section-title">Everything you need at a glance.</h2>
+    <p class="section-sub">
+      Reads Claude Code's local JSONL transcripts directly — no API calls, no account login, no tracking.
+    </p>
+    <div class="features-grid">
+      <div class="feature">
+        <div class="feature-icon"><iconify-icon icon="mdi:timer-outline"></iconify-icon></div>
+        <p class="feature-title">Live session tracking</p>
+        <p class="feature-desc">Rolling 5-hour window matching Anthropic's rate-limit bucket. See exactly when your session resets.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon"><iconify-icon icon="mdi:calendar-week-outline"></iconify-icon></div>
+        <p class="feature-title">Weekly totals</p>
+        <p class="feature-desc">Rolling 7-day window with a countdown to the next reset. Track your weekly quota at a glance.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon"><iconify-icon icon="mdi:chart-bar"></iconify-icon></div>
+        <p class="feature-title">Per-model breakdown</p>
+        <p class="feature-desc">See how much Sonnet, Haiku, and Opus each contributed to your session.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon"><iconify-icon icon="mdi:percent-outline"></iconify-icon></div>
+        <p class="feature-title">Plan percentage bars</p>
+        <p class="feature-desc">Set your plan (Pro, Max 5×, Max 20×) and watch live percentage bars fill up as you work.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon"><iconify-icon icon="mdi:refresh"></iconify-icon></div>
+        <p class="feature-title">Auto-refresh on open</p>
+        <p class="feature-desc">Fetches fresh data the instant you click the tray icon. Configurable background poll interval too.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon"><iconify-icon icon="mdi:shield-lock-outline"></iconify-icon></div>
+        <p class="feature-title">100% local</p>
+        <p class="feature-desc">Reads files directly from <code class="inline-code">~/.claude/projects/</code>. Nothing leaves your machine.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how-it-works" class="code-section">
+    <p class="section-label">How it works</p>
+    <h2 class="section-title">Reads your local transcripts.</h2>
+    <p class="section-sub">
+      Claude Code writes every conversation to JSONL files on disk.
+      Claude Watch parses those files directly — no network requests needed.
+    </p>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dot" style="background:#ff5f56"></div>
+        <div class="code-dot" style="background:#ffbd2e"></div>
+        <div class="code-dot" style="background:#27c93f"></div>
+        <span class="code-filename">~/.claude/projects/**/*.jsonl</span>
+      </div>
+      <pre>{
+  <span class="key">"type"</span>: <span class="str">"assistant"</span>,
+  <span class="key">"timestamp"</span>: <span class="str">"2025-06-13T10:30:00.000Z"</span>,
+  <span class="key">"message"</span>: {
+    <span class="key">"id"</span>: <span class="str">"msg_abc123"</span>,
+    <span class="key">"model"</span>: <span class="str">"claude-sonnet-4-6"</span>,
+    <span class="key">"usage"</span>: {
+      <span class="key">"input_tokens"</span>: <span class="num">1234</span>,
+      <span class="key">"output_tokens"</span>: <span class="num">567</span>,
+      <span class="key">"cache_creation_input_tokens"</span>: <span class="num">8900</span>,
+      <span class="key">"cache_read_input_tokens"</span>: <span class="num">45000</span>
+    }
+  }
+}
+
+<span class="cmt">// Claude Watch scans every file, deduplicates by message ID,
+// aggregates into 5h session + 7d weekly windows, and renders
+// the result in a floating panel above your menu bar.</span></pre>
+    </div>
+  </section>
+
+  <!-- INSTALL -->
+  <section id="install" class="install-section">
+    <p class="section-label">Install</p>
+    <h2 class="section-title">Up in 30 seconds.</h2>
+    <p class="section-sub">
+      Download, drag to Applications, and click the tray icon. That's it.
+    </p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Download the latest release</h3>
+          <p>Grab <code class="inline-code">Claude Watch.dmg</code> from the <a href="https://github.com/aadhil96/OpenCluadeUsage/releases" style="color:var(--claude);text-decoration:none">GitHub Releases</a> page.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Drag to Applications</h3>
+          <p>Open the <code class="inline-code">.dmg</code> and drag <strong>Claude Watch.app</strong> into your <code class="inline-code">/Applications</code> folder.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Bypass Gatekeeper (first launch)</h3>
+          <p>macOS may block the app since it's not notarized. Right-click → <strong>Open</strong> → <strong>Open</strong> to allow it. Or run once in Terminal:</p>
+          <pre style="margin-top:12px;padding:14px 18px;border-radius:8px;font-size:12px;background:#111;border:1px solid var(--border)"><span class="kw">xattr</span> -cr /Applications/Claude Watch.app</pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Set your plan in Settings</h3>
+          <p>Click the tray icon → gear icon → select your Claude plan (Pro, Max 5×, or Max 20×) to enable percentage bars.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-left">
+      <strong>Claude Watch</strong> — open source, MIT licence
+    </div>
+    <ul class="footer-links">
+      <li><a href="https://github.com/aadhil96/OpenCluadeUsage" target="_blank">GitHub</a></li>
+      <li><a href="https://github.com/aadhil96/OpenCluadeUsage/releases" target="_blank">Releases</a></li>
+      <li><a href="https://github.com/aadhil96/OpenCluadeUsage/issues" target="_blank">Issues</a></li>
+    </ul>
+  </footer>
+
+</body>
+</html>
