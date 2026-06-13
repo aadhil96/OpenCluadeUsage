@@ -1,3 +1,4 @@
+import { Icon } from "@iconify/react";
 import type { UsageSummary } from "../types/usage";
 import { ProgressBar } from "./ProgressBar";
 import { ModelBreakdown } from "./ModelBreakdown";
@@ -103,10 +104,10 @@ export function TrayPanel({ data, loading, error, onRefresh }: TrayPanelProps) {
         </div>
         <ProgressBar percentage={session.percentage} />
         <div className="mt-2.5 grid grid-cols-2 gap-y-0.5 text-[11px] text-neutral-400">
-          <span>↓ {formatTokens(session.input_tokens)} in</span>
-          <span>↑ {formatTokens(session.output_tokens)} out</span>
-          <span>✦ {formatTokens(session.cache_creation_tokens)} cached</span>
-          <span>⚡ {formatTokens(session.cache_read_tokens)} read</span>
+          <span className="flex items-center gap-1"><Icon icon="mdi:arrow-down" width={11} /> {formatTokens(session.input_tokens)} in</span>
+          <span className="flex items-center gap-1"><Icon icon="mdi:arrow-up" width={11} /> {formatTokens(session.output_tokens)} out</span>
+          <span className="flex items-center gap-1"><Icon icon="mdi:lightning-bolt" width={11} /> {formatTokens(session.cache_creation_tokens)} cached</span>
+          <span className="flex items-center gap-1"><Icon icon="mdi:flash-outline" width={11} /> {formatTokens(session.cache_read_tokens)} read</span>
         </div>
       </Card>
 
@@ -139,10 +140,10 @@ export function TrayPanel({ data, loading, error, onRefresh }: TrayPanelProps) {
         </div>
         <ProgressBar percentage={weekly.percentage} />
         <div className="mt-2.5 grid grid-cols-2 gap-y-0.5 text-[11px] text-neutral-400">
-          <span>↓ {formatTokens(weekly.input_tokens)} in</span>
-          <span>↑ {formatTokens(weekly.output_tokens)} out</span>
-          <span>✦ {formatTokens(weekly.cache_creation_tokens)} cached</span>
-          <span>⚡ {formatTokens(weekly.cache_read_tokens)} read</span>
+          <span className="flex items-center gap-1"><Icon icon="mdi:arrow-down" width={11} /> {formatTokens(weekly.input_tokens)} in</span>
+          <span className="flex items-center gap-1"><Icon icon="mdi:arrow-up" width={11} /> {formatTokens(weekly.output_tokens)} out</span>
+          <span className="flex items-center gap-1"><Icon icon="mdi:lightning-bolt" width={11} /> {formatTokens(weekly.cache_creation_tokens)} cached</span>
+          <span className="flex items-center gap-1"><Icon icon="mdi:flash-outline" width={11} /> {formatTokens(weekly.cache_read_tokens)} read</span>
         </div>
       </Card>
 
