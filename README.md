@@ -4,7 +4,7 @@ A macOS menu bar app that shows live Claude Code token usage — session window,
 
 Built with **Tauri v2 + Rust** backend and **React + TypeScript + Tailwind** frontend.
 
-![ClaudeUsage screenshot](image/image.png)
+![ClaudeUsage screenshot image](image/image.png)
 
 ---
 
