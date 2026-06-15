@@ -1,6 +1,6 @@
 # ClaudeUsage
 
-A macOS menu bar app that shows live Claude Code token usage - session window, weekly totals, per-model breakdown — parsed directly from Claude Code's local JSONL transcript files.
+A macOS menu bar app that shows live Claude Code token usage - session window, weekly totals, per-model breakdown - parsed directly from Claude Code's local JSONL transcript files.
 
 Built with **Tauri v2 + Rust** backend and **React + TypeScript + Tailwind** frontend.
 
