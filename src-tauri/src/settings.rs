@@ -22,23 +22,27 @@ impl Default for Plan {
 }
 
 impl Plan {
-    // Approximate 5-hour session token limits (input + output + cache_creation only;
-    // cache reads don't count toward Anthropic's quota).
+    // Approximate 5-hour session token budgets, calibrated against the
+    // percentages Claude's own Settings → Usage panel shows. These are best
+    // guesses — Anthropic doesn't publish exact formulas, and the real budget
+    // is based on weighted compute units that vary per model. If the numbers
+    // don't match what you see in claude.ai, set a custom_session_limit
+    // (Settings → Custom Limits) to override.
     pub fn session_limit(&self) -> Option<u64> {
         match self {
-            Plan::Pro => Some(1_200_000),
-            Plan::Max5x => Some(6_000_000),
-            Plan::Max20x => Some(24_000_000),
+            Plan::Pro => Some(5_000_000),
+            Plan::Max5x => Some(25_000_000),
+            Plan::Max20x => Some(100_000_000),
             Plan::None => None,
         }
     }
 
-    // Approximate 7-day weekly token limits.
+    // Approximate weekly token budgets (calendar week, resets ~Thu 03:00 local).
     pub fn weekly_limit(&self) -> Option<u64> {
         match self {
-            Plan::Pro => Some(8_000_000),
-            Plan::Max5x => Some(40_000_000),
-            Plan::Max20x => Some(160_000_000),
+            Plan::Pro => Some(115_000_000),
+            Plan::Max5x => Some(575_000_000),
+            Plan::Max20x => Some(2_300_000_000),
             Plan::None => None,
         }
     }

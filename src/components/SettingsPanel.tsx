@@ -16,9 +16,9 @@ const REFRESH_OPTIONS = [
 ];
 
 const PLAN_NOTES: Record<Plan, string> = {
-  pro: "≈1.2M / session • ≈8M / week",
-  max5x: "≈6M / session • ≈40M / week",
-  max20x: "≈24M / session • ≈160M / week",
+  pro: "≈5M / session • ≈115M / week",
+  max5x: "≈25M / session • ≈575M / week",
+  max20x: "≈100M / session • ≈2.3B / week",
   none: "Raw counts only, no % bars",
 };
 
@@ -78,11 +78,16 @@ export function SettingsPanel({ settings, onSave, saving }: SettingsPanelProps) 
               <label className="text-[11px] text-neutral-400 mb-1 block">Session</label>
               <input
                 type="number"
+                min={1}
                 placeholder="144000"
                 value={local.custom_session_limit ?? ""}
-                onChange={(e) =>
-                  setLocal({ ...local, custom_session_limit: e.target.value ? Number(e.target.value) : null })
-                }
+                onChange={(e) => {
+                  const n = Number(e.target.value);
+                  setLocal({
+                    ...local,
+                    custom_session_limit: e.target.value && n > 0 ? n : null,
+                  });
+                }}
                 className="w-full bg-panel-muted rounded-xl px-3 py-2 text-[12px] text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-900"
               />
             </div>
@@ -90,11 +95,16 @@ export function SettingsPanel({ settings, onSave, saving }: SettingsPanelProps) 
               <label className="text-[11px] text-neutral-400 mb-1 block">Weekly</label>
               <input
                 type="number"
+                min={1}
                 placeholder="1000000"
                 value={local.custom_weekly_limit ?? ""}
-                onChange={(e) =>
-                  setLocal({ ...local, custom_weekly_limit: e.target.value ? Number(e.target.value) : null })
-                }
+                onChange={(e) => {
+                  const n = Number(e.target.value);
+                  setLocal({
+                    ...local,
+                    custom_weekly_limit: e.target.value && n > 0 ? n : null,
+                  });
+                }}
                 className="w-full bg-panel-muted rounded-xl px-3 py-2 text-[12px] text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-900"
               />
             </div>

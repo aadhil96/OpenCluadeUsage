@@ -2,18 +2,13 @@ import { Icon } from "@iconify/react";
 import type { UsageSummary } from "../types/usage";
 import { ProgressBar } from "./ProgressBar";
 import { ModelBreakdown } from "./ModelBreakdown";
+import { formatTokens, formatCost } from "../lib/format";
 
 interface TrayPanelProps {
   data: UsageSummary | null;
   loading: boolean;
   error: string | null;
   onRefresh: () => void;
-}
-
-function formatTokens(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
-  return String(n);
 }
 
 function formatTime(minutes: number | null): string {
@@ -71,7 +66,7 @@ export function TrayPanel({ data, loading, error, onRefresh }: TrayPanelProps) {
 
   if (!data) return null;
 
-  const { session, weekly, model_breakdown, last_updated } = data;
+  const { session, weekly, model_breakdown, cost_estimate, last_updated } = data;
 
   return (
     <div className="flex flex-col gap-2">
@@ -86,12 +81,17 @@ export function TrayPanel({ data, loading, error, onRefresh }: TrayPanelProps) {
           )}
         </div>
         <div className="flex items-baseline justify-between mt-1 mb-2.5">
-          <span className="text-[26px] font-bold tracking-tight text-neutral-900 tabular-nums leading-none">
-            {formatTokens(session.total_tokens)}
-          </span>
+          <div>
+            <span className="text-[26px] font-bold tracking-tight text-neutral-900 font-mono tabular-nums leading-none">
+              {formatTokens(session.total_tokens)}
+            </span>
+            <p className="text-[10px] text-neutral-400 mt-1 font-mono tabular-nums">
+              {formatCost(cost_estimate.session_cost_usd)} spent
+            </p>
+          </div>
           <div className="text-right">
             {session.percentage !== null ? (
-              <span className="text-[18px] font-semibold text-neutral-900 tabular-nums leading-none">
+              <span className="text-[18px] font-semibold text-neutral-900 font-mono tabular-nums leading-none">
                 {session.percentage.toFixed(0)}%
               </span>
             ) : (
@@ -122,12 +122,17 @@ export function TrayPanel({ data, loading, error, onRefresh }: TrayPanelProps) {
           )}
         </div>
         <div className="flex items-baseline justify-between mt-1 mb-2.5">
-          <span className="text-[22px] font-bold tracking-tight text-neutral-900 tabular-nums leading-none">
-            {formatTokens(weekly.total_tokens)}
-          </span>
+          <div>
+            <span className="text-[22px] font-bold tracking-tight text-neutral-900 font-mono tabular-nums leading-none">
+              {formatTokens(weekly.total_tokens)}
+            </span>
+            <p className="text-[10px] text-neutral-400 mt-1 font-mono tabular-nums">
+              {formatCost(cost_estimate.weekly_cost_usd)} spent
+            </p>
+          </div>
           <div className="text-right">
             {weekly.percentage !== null ? (
-              <span className="text-[16px] font-semibold text-neutral-900 tabular-nums leading-none">
+              <span className="text-[16px] font-semibold text-neutral-900 font-mono tabular-nums leading-none">
                 {weekly.percentage.toFixed(0)}%
               </span>
             ) : (

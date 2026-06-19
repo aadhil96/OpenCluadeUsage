@@ -1,13 +1,8 @@
 import type { ModelUsage } from "../types/usage";
+import { formatTokens, formatCost } from "../lib/format";
 
 interface ModelBreakdownProps {
   models: ModelUsage[];
-}
-
-function formatTokens(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
-  return String(n);
 }
 
 export function ModelBreakdown({ models }: ModelBreakdownProps) {
@@ -23,8 +18,10 @@ export function ModelBreakdown({ models }: ModelBreakdownProps) {
         <div key={model.model}>
           <div className="flex justify-between items-baseline mb-1">
             <span className="text-[12px] font-medium text-neutral-800">{model.display_name}</span>
-            <span className="text-[11px] text-neutral-400 tabular-nums">
+            <span className="text-[11px] text-neutral-400 font-mono tabular-nums">
               {formatTokens(model.total_tokens)}
+              <span className="text-neutral-300"> · </span>
+              {formatCost(model.cost_usd)}
             </span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-panel-muted overflow-hidden">

@@ -4,7 +4,7 @@ import type { Settings } from "../types/usage";
 
 const DEFAULT_SETTINGS: Settings = {
   plan: "none",
-  refresh_interval_secs: 60,
+  refresh_interval_secs: 30,
   launch_at_login: false,
   custom_session_limit: null,
   custom_weekly_limit: null,

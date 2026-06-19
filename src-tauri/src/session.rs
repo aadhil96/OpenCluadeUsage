@@ -131,7 +131,7 @@ pub fn aggregate(entries: &[UsageEntry], settings: &Settings) -> UsageSummary {
             (None, None, None)
         };
 
-    let session_limit = settings.effective_session_limit();
+    let session_limit = settings.effective_session_limit().filter(|&l| l > 0);
     let session_pct = session_limit.map(|lim| {
         (session_tokens.total_tokens as f64 / lim as f64 * 100.0).min(100.0)
     });
@@ -160,7 +160,7 @@ pub fn aggregate(entries: &[UsageEntry], settings: &Settings) -> UsageSummary {
         .map(|oldest| (oldest + Duration::days(WEEKLY_DAYS)).to_rfc3339())
         .unwrap_or_else(|| now.to_rfc3339());
 
-    let weekly_limit = settings.effective_weekly_limit();
+    let weekly_limit = settings.effective_weekly_limit().filter(|&l| l > 0);
     let weekly_pct = weekly_limit.map(|lim| {
         (weekly_tokens.total_tokens as f64 / lim as f64 * 100.0).min(100.0)
     });

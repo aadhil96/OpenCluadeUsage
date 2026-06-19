@@ -11,7 +11,7 @@ use std::time::Instant;
 
 use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Manager, State,
+    AppHandle, Emitter, Manager, State,
 };
 
 use session::UsageSummary;
@@ -78,11 +78,11 @@ fn save_settings(
     {
         use tauri_plugin_autostart::ManagerExt;
         let autostart = app.autolaunch();
-        let _ = if settings.launch_at_login {
-            autostart.enable()
+        if settings.launch_at_login {
+            autostart.enable().map_err(|e| e.to_string())?;
         } else {
-            autostart.disable()
-        };
+            autostart.disable().map_err(|e| e.to_string())?;
+        }
     }
 
     *state.settings.lock().unwrap() = settings;
@@ -104,10 +104,12 @@ fn poll_and_update_badge(app: &AppHandle) {
     };
     let summary = session::aggregate(&entries, &settings);
     let badge = session::tray_badge(&summary);
-    *state.last_summary.lock().unwrap() = Some(summary);
+    *state.last_summary.lock().unwrap() = Some(summary.clone());
     if let Some(tray) = app.tray_by_id("main") {
         let _ = tray.set_title(Some(&badge));
     }
+    // Notify any open frontend window so it can re-render without polling.
+    let _ = app.emit("usage-updated", summary);
 }
 
 fn spawn_poller(app: AppHandle) {
@@ -194,27 +196,50 @@ fn toggle_popup(app: &AppHandle, tray_x: f64, tray_y: f64) {
         return;
     }
 
+    // Window size matches tauri.conf.json — these are LOGICAL points.
     const WIN_W: f64 = 340.0;
-    const WIN_H: f64 = 540.0;
+    const WIN_H: f64 = 510.0;
     const GAP: f64 = 8.0;
 
-    let (screen_w, screen_h) = win
-        .current_monitor()
-        .ok()
-        .flatten()
-        .map(|m| {
+    // tray_x/tray_y are PHYSICAL pixels. Pick the monitor that contains them,
+    // then convert everything to logical units so the math lines up with the
+    // window's logical size.
+    let monitor = win.available_monitors().ok().and_then(|monitors| {
+        monitors.into_iter().find(|m| {
+            let pos = m.position();
             let sz = m.size();
-            (sz.width as f64, sz.height as f64)
+            let x0 = pos.x as f64;
+            let y0 = pos.y as f64;
+            let x1 = x0 + sz.width as f64;
+            let y1 = y0 + sz.height as f64;
+            tray_x >= x0 && tray_x < x1 && tray_y >= y0 && tray_y < y1
         })
-        .unwrap_or((1440.0, 900.0));
-
-    let x = (tray_x - WIN_W / 2.0).max(0.0).min(screen_w - WIN_W);
-    let y = (tray_y + GAP).min(screen_h - WIN_H - GAP);
-
-    let _ = win.set_position(tauri::PhysicalPosition {
-        x: x as i32,
-        y: y as i32,
     });
+
+    let (mon_x, mon_y, screen_w, screen_h, scale) = match monitor {
+        Some(m) => {
+            let pos = m.position();
+            let sz = m.size();
+            let scale = m.scale_factor();
+            (
+                pos.x as f64 / scale,
+                pos.y as f64 / scale,
+                sz.width as f64 / scale,
+                sz.height as f64 / scale,
+                scale,
+            )
+        }
+        None => (0.0, 0.0, 1440.0, 900.0, 2.0),
+    };
+    let tray_x_log = tray_x / scale;
+    let tray_y_log = tray_y / scale;
+
+    let x = (tray_x_log - WIN_W / 2.0)
+        .max(mon_x)
+        .min(mon_x + screen_w - WIN_W);
+    let y = (tray_y_log + GAP).min(mon_y + screen_h - WIN_H - GAP);
+
+    let _ = win.set_position(tauri::LogicalPosition { x, y });
 
     // Stamp the time before showing so the blur handler's 600ms guard is
     // measured from this exact moment.

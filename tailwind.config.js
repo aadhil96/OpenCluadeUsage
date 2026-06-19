@@ -4,6 +4,24 @@ export default {
   darkMode: "class",
   theme: {
     extend: {
+      fontFamily: {
+        sans: [
+          "\"Geist Variable\"",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "\"SF Pro Text\"",
+          "\"Segoe UI\"",
+          "sans-serif",
+        ],
+        mono: [
+          "\"Geist Mono Variable\"",
+          "ui-monospace",
+          "SFMono-Regular",
+          "Menlo",
+          "Monaco",
+          "monospace",
+        ],
+      },
       colors: {
         panel: {
           bg: "#f2f2f7",

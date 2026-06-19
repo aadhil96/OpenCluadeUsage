@@ -103,12 +103,18 @@ fn claude_project_dirs() -> Vec<PathBuf> {
 }
 
 pub fn find_jsonl_files() -> Vec<PathBuf> {
-    let mut files = Vec::new();
+    let mut files: Vec<PathBuf> = Vec::new();
+    let mut seen: HashSet<PathBuf> = HashSet::new();
     for base in claude_project_dirs() {
         let pattern = base.join("**").join("*.jsonl");
         if let Ok(paths) = glob(&pattern.to_string_lossy()) {
             for path in paths.flatten() {
-                files.push(path);
+                // Canonicalize so symlinked project dirs (e.g. ~/.config/claude
+                // pointing at ~/.claude) don't yield duplicate entries.
+                let key = fs::canonicalize(&path).unwrap_or_else(|_| path.clone());
+                if seen.insert(key) {
+                    files.push(path);
+                }
             }
         }
     }
@@ -185,35 +191,29 @@ pub fn scan_all(
     // (duplicate lines in a file, or the same message in both a session file
     // and a subagent file). When two entries share an ID, prefer the
     // non-sidechain version; otherwise keep the first seen (oldest timestamp).
-    let mut seen: HashMap<String, bool> = HashMap::new(); // id -> is_non_sidechain
-    let mut result: Vec<UsageEntry> = Vec::new();
+    // Entries without an ID can't be deduplicated and pass through verbatim.
+    let mut by_id: HashMap<String, UsageEntry> = HashMap::new();
+    let mut no_id: Vec<UsageEntry> = Vec::new();
 
     for entry in all {
         match &entry.message_id {
-            None => {
-                // No ID — cannot deduplicate, always include
-                result.push(entry);
-            }
-            Some(id) => {
-                if let Some(existing_non_sidechain) = seen.get(id) {
-                    if *existing_non_sidechain {
-                        // Already have a non-sidechain copy — skip this one
-                        continue;
-                    } else if !entry.is_sidechain {
-                        // Upgrade: replace the sidechain copy with this non-sidechain one
-                        result.retain(|e| e.message_id.as_deref() != Some(id));
-                        seen.insert(id.clone(), true);
-                        result.push(entry);
-                    }
-                    // else: already have sidechain, new one is also sidechain — skip
-                } else {
-                    seen.insert(id.clone(), !entry.is_sidechain);
-                    result.push(entry);
+            None => no_id.push(entry),
+            Some(id) => match by_id.get(id) {
+                None => {
+                    by_id.insert(id.clone(), entry);
                 }
-            }
+                Some(existing) => {
+                    // Replace only when upgrading a sidechain copy to a
+                    // non-sidechain one. Otherwise keep the existing (older).
+                    if existing.is_sidechain && !entry.is_sidechain {
+                        by_id.insert(id.clone(), entry);
+                    }
+                }
+            },
         }
     }
 
+    let mut result: Vec<UsageEntry> = by_id.into_values().chain(no_id).collect();
     result.sort_by_key(|e| e.timestamp);
     result
 }

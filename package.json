@@ -13,6 +13,8 @@
     "tauri:icon": "tauri icon src-tauri/icons/app-icon.png"
   },
   "dependencies": {
+    "@fontsource-variable/geist": "^5.2.9",
+    "@fontsource-variable/geist-mono": "^5.2.8",
     "@iconify/react": "^6.0.2",
     "@tauri-apps/api": "^2.1.1",
     "@tauri-apps/plugin-autostart": "^2.2.0",
